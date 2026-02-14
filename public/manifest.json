@@ -1,4 +1,3 @@
-
 {
   "short_name": "LupaSaude",
   "name": "Lupa Saúde Acessível",
@@ -10,8 +9,19 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "id": "com.lupa.saude.acessivel",
+  "description": "Aplicativo de acessibilidade para leitura de receitas médicas com IA.",
+  "categories": [
+    "medical",
+    "accessibility",
+    "productivity"
+  ],
+  "start_url": "./",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "minimal-ui"
+  ],
   "theme_color": "#000000",
   "background_color": "#000000",
   "orientation": "portrait"
