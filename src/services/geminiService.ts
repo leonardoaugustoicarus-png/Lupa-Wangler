@@ -2,7 +2,13 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { RecognitionResult } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const API_KEY = process.env.API_KEY || '';
+
+if (!API_KEY) {
+  console.warn("AVISO: Chave de API (GEMINI_API_KEY) não detectada. A análise não funcionará.");
+}
+
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const analyzeMedicalDocument = async (base64Image: string): Promise<RecognitionResult> => {
   const prompt = `

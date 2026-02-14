@@ -190,7 +190,8 @@ const App: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Erro na análise:", error);
-      alert(error.message || "Erro ao analisar documento. Tente novamente.");
+      const technicalDetails = error.message || JSON.stringify(error);
+      alert(`Erro ao analisar documento: ${technicalDetails}\n\nDICA: Verifique se a GEMINI_API_KEY está configurada no Vercel.`);
     } finally {
       setIsProcessing(false);
     }
@@ -274,12 +275,23 @@ const App: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-black uppercase tracking-tight">Câmera Indisponível</h2>
                 <p className="text-zinc-400 text-sm max-w-xs mx-auto leading-relaxed">{cameraError}</p>
-                <button
-                  onClick={() => startCamera()}
-                  className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-600/20"
-                >
-                  Tentar Novamente
-                </button>
+                <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                  <button
+                    onClick={() => startCamera()}
+                    className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-600/20"
+                  >
+                    Tentar Novamente
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(cameraError || "No error");
+                      alert("Erro técnico copiado!");
+                    }}
+                    className="bg-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-[10px] font-bold uppercase border border-white/5 active:bg-zinc-700"
+                  >
+                    Copiar Erro para Suporte
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-8 animate-in fade-in duration-700">
