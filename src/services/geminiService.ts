@@ -18,7 +18,7 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-pro', // Pro para melhor extração de dados e busca
+    model: 'gemini-1.5-flash', // Flash é mais rápido e amplamente disponível
     contents: [
       {
         parts: [
@@ -68,7 +68,7 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
 
 export const generateSpeech = async (text: string): Promise<Uint8Array> => {
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash", // Flash 2.0 suporta modalidades nativas como áudio
+    model: "gemini-1.5-flash", // Usando Flash 1.5 para maior compatibilidade
     contents: [{ parts: [{ text: text }] }],
     config: {
       responseModalities: [Modality.AUDIO],
