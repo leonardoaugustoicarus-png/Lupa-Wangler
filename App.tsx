@@ -15,7 +15,7 @@ const App: React.FC = () => {
     audioEnabled: true,
     zoomLevel: 1
   });
-  
+
   const [isFrozen, setIsFrozen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<RecognitionResult | null>(null);
@@ -36,10 +36,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const saved = localStorage.getItem('lupa_history');
     if (saved) setHistory(JSON.parse(saved));
-    
+
     // Tenta iniciar a câmera automaticamente
     startCamera();
-    
+
     return stopCamera;
   }, []);
 
@@ -66,32 +66,54 @@ const App: React.FC = () => {
   const startCamera = async () => {
     stopCamera();
     setCameraError(null);
-    
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError("Seu navegador não suporta acesso à câmera. Tente usar o Chrome ou Safari atualizados.");
+      setCameraActive(false);
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment', 
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }, 
-        audio: false 
+      // Tenta primeiro com as configurações ideais
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
       });
-      
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setCameraActive(true);
       }
     } catch (err: any) {
-      console.error("Erro ao acessar câmera:", err);
-      setCameraActive(false);
-      
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setCameraError("Acesso à câmera negado. Por favor, habilite nas configurações do seu navegador.");
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setCameraError("Câmera não encontrada.");
-      } else {
-        setCameraError("Erro ao iniciar a câmera. Tente carregar uma foto.");
+      console.error("Erro ao acessar câmera (primeira tentativa):", err);
+
+      // Segunda tentativa com restrições mínimas
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+        streamRef.current = fallbackStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          setCameraActive(true);
+        }
+      } catch (fallbackErr: any) {
+        console.error("Erro ao acessar câmera (fallback):", fallbackErr);
+        setCameraActive(false);
+
+        if (fallbackErr.name === 'NotAllowedError' || fallbackErr.name === 'PermissionDeniedError') {
+          setCameraError("Acesso à câmera negado. Habilite nas configurações do site (ícone de cadeado na barra de endereço).");
+        } else if (fallbackErr.name === 'NotFoundError' || fallbackErr.name === 'DevicesNotFoundError') {
+          setCameraError("Nenhuma câmera detectada neste dispositivo.");
+        } else {
+          setCameraError("Não foi possível conectar à câmera. Use o botão abaixo para enviar uma foto.");
+        }
       }
     }
   };
@@ -105,7 +127,7 @@ const App: React.FC = () => {
   const handleShare = async () => {
     if (!result) return;
     const shareText = `*Lupa Saúde - Resumo da Receita*\n\n${result.summary}\n\n*Medicamentos:* ${result.medications.join(', ')}\n${result.crm ? `*CRM:* ${result.crm}` : ''}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -219,7 +241,7 @@ const App: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-black uppercase tracking-tight">Câmera Indisponível</h2>
                 <p className="text-zinc-400 text-sm max-w-xs mx-auto leading-relaxed">{cameraError}</p>
-                <button 
+                <button
                   onClick={() => startCamera()}
                   className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-600/20"
                 >
@@ -227,9 +249,21 @@ const App: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="animate-pulse flex flex-col items-center">
-                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-                 <p className="font-black uppercase tracking-widest text-zinc-500">Aguardando Câmera...</p>
+              <div className="flex flex-col items-center gap-8 animate-in fade-in duration-700">
+                <div className="relative">
+                  <div className="w-20 h-20 border-4 border-blue-500/20 rounded-full" />
+                  <div className="absolute inset-0 w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+                <div className="space-y-4">
+                  <p className="font-black uppercase tracking-widest text-blue-400 text-sm">Aguardando Câmera...</p>
+                  <p className="text-zinc-500 text-xs px-4">Se o prompt de permissão não aparecer, você pode carregar uma imagem manualmente:</p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-zinc-800 text-white px-6 py-3 rounded-xl font-bold text-sm border border-white/5 active:scale-95 transition-all"
+                  >
+                    Carregar Foto da Galeria
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -272,12 +306,12 @@ const App: React.FC = () => {
                   className="absolute cursor-pointer"
                 />
                 <div className="absolute inset-x-0 bottom-0 top-0 pointer-events-none flex flex-col justify-between items-center py-8">
-                   <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
-                   <div className="w-2.5 h-2.5 bg-white/40 rounded-full" />
-                   <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
+                  <div className="w-2.5 h-2.5 bg-white/40 rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setSettings(s => ({ ...s, zoomLevel: 1 }))}
                 title="Resetar Zoom"
                 className="p-3 bg-white/10 backdrop-blur-md rounded-full active:scale-90 transition-transform"
@@ -352,7 +386,7 @@ const App: React.FC = () => {
 
         <button onClick={handleMainAction} aria-label={isFrozen ? "Sair" : (cameraActive ? "Capturar" : "Carregar")} className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all active:scale-95 shadow-2xl ${isFrozen ? 'bg-red-600' : 'bg-white text-black'}`}>
           {isFrozen ? (
-             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
           ) : (
             <div className="w-20 h-20 rounded-full border-4 border-zinc-200 bg-white" />
           )}
