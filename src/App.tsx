@@ -95,14 +95,11 @@ const App: React.FC = () => {
 
     setNeedsPermission(false);
 
-    // Implementação baseada na sugestão do usuário para máxima compatibilidade
+    // Implementação EXATA sugerida pelo usuário para evitar bloqueios
     const constraints = {
       video: {
-        facingMode: { ideal: "environment" }, // Força o uso da câmera traseira
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      },
-      audio: false
+        facingMode: { ideal: "environment" }
+      }
     };
 
     try {
@@ -310,12 +307,18 @@ const App: React.FC = () => {
             </svg>
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tighter mb-4">Lupa Saúde</h1>
-          <p className="text-zinc-400 text-lg mb-12 max-w-xs leading-tight">Para começar a ler suas receitas, precisamos de acesso à sua câmera.</p>
+          {cameraError ? (
+            <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl mb-8 max-w-xs mx-auto">
+              <p className="text-red-400 text-sm font-bold">{cameraError}</p>
+            </div>
+          ) : (
+            <p className="text-zinc-400 text-lg mb-12 max-w-xs leading-tight mx-auto">Para começar a ler suas receitas, precisamos de acesso à sua câmera.</p>
+          )}
           <button
             onClick={() => startCamera()}
             className="w-full max-w-xs bg-white text-black py-6 rounded-[2rem] font-black text-xl uppercase tracking-widest active:scale-95 transition-all shadow-2xl"
           >
-            Iniciar Aplicativo
+            {cameraError ? 'Tentar Novamente' : 'Iniciar Aplicativo'}
           </button>
           <p className="mt-8 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">Tecnologia Acessível · São Paulo, BR</p>
         </div>
