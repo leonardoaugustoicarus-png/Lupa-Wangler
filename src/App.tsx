@@ -159,7 +159,8 @@ const App: React.FC = () => {
           const errorMessage = fallbackErr.message || "";
 
           if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-            setCameraError(`Permissão negada (${errorName}). Toque no cadeado na barra de endereços para permitir a câmera.`);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            setCameraError(`Permissão negada (${errorName}). ${isAndroid ? 'Toque nos três pontos (menu) > Configurações > Configurações do site > Câmera e permita o acesso.' : 'Toque no cadeado na barra de endereços para permitir a câmera.'}`);
           } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
             setCameraError(`Câmera não encontrada (${errorName}).`);
           } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
