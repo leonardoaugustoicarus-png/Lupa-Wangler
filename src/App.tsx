@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [torchActive, setTorchActive] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
+  const [needsPermission, setNeedsPermission] = useState(true);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   // Referências para elementos de hardware e mídia
@@ -39,8 +40,15 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('lupa_history');
     if (saved) setHistory(JSON.parse(saved));
 
-    // Tenta iniciar a câmera automaticamente
-    startCamera();
+    // Verifica se já temos permissão (se o navegador suportar o Permissions API)
+    if (navigator.permissions && (navigator.permissions as any).query) {
+      navigator.permissions.query({ name: 'camera' as any }).then((result) => {
+        if (result.state === 'granted') {
+          setNeedsPermission(false);
+          startCamera();
+        }
+      });
+    }
 
     return stopCamera;
   }, []);
@@ -81,8 +89,11 @@ const App: React.FC = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setCameraError("Seu navegador não suporta acesso à câmera ou bloqueou o acesso. Tente o Chrome ou Safari atualizados.");
       setCameraActive(false);
+      setNeedsPermission(false);
       return;
     }
+
+    setNeedsPermission(false);
 
     try {
       // Primeira tentativa: Alta resolução e câmera traseira
@@ -287,6 +298,26 @@ const App: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col text-white overflow-hidden font-sans select-none">
+      {needsPermission && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black pointer-events-none" />
+          <div className="w-32 h-32 bg-blue-600/20 rounded-full flex items-center justify-center mb-10 border border-blue-500/30 animate-premium-pulse">
+            <svg className="w-16 h-16 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-black uppercase tracking-tighter mb-4">Lupa Saúde</h1>
+          <p className="text-zinc-400 text-lg mb-12 max-w-xs leading-tight">Para começar a ler suas receitas, precisamos de acesso à sua câmera.</p>
+          <button
+            onClick={() => startCamera()}
+            className="w-full max-w-xs bg-white text-black py-6 rounded-[2rem] font-black text-xl uppercase tracking-widest active:scale-95 transition-all shadow-2xl"
+          >
+            Iniciar Aplicativo
+          </button>
+          <p className="mt-8 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">Tecnologia Acessível · São Paulo, BR</p>
+        </div>
+      )}
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
 
       {/* Viewport Principal com Filtros de Acessibilidade */}
