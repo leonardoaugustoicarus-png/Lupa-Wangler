@@ -23,6 +23,8 @@ const App: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [torchActive, setTorchActive] = useState(false);
+  const [hasTorch, setHasTorch] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   // Referências para elementos de hardware e mídia
@@ -61,6 +63,8 @@ const App: React.FC = () => {
       streamRef.current = null;
     }
     setCameraActive(false);
+    setTorchActive(false);
+    setHasTorch(false);
   };
 
   const startCamera = async () => {
@@ -92,6 +96,14 @@ const App: React.FC = () => {
       });
 
       streamRef.current = stream;
+
+      // Checa suporte a lanterna
+      const track = stream.getVideoTracks()[0];
+      if (track && track.getCapabilities) {
+        const caps = track.getCapabilities() as any;
+        setHasTorch(!!caps.torch);
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setCameraActive(true);
@@ -146,6 +158,23 @@ const App: React.FC = () => {
             setCameraError(`Erro técnico: ${errorName}. ${errorMessage}. Tente carregar uma foto.`);
           }
         }
+      }
+    }
+  };
+
+  const toggleTorch = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    if (track) {
+      try {
+        const newTorchState = !torchActive;
+        await track.applyConstraints({
+          advanced: [{ torch: newTorchState } as any]
+        });
+        setTorchActive(newTorchState);
+        triggerHaptic('light');
+      } catch (err) {
+        console.warn("Erro ao controlar lanterna:", err);
       }
     }
   };
@@ -315,55 +344,50 @@ const App: React.FC = () => {
         )}
         <canvas ref={canvasRef} className={`absolute inset-0 w-full h-full object-cover transition-all duration-200 origin-center ${isFrozen ? 'opacity-100' : 'opacity-0'}`} style={{ transform: `scale(${settings.zoomLevel})` }} />
 
-        {/* HUD de Scan e Slider de Zoom */}
+        {/* HUD de Scan e Controles Hardware */}
         {!isFrozen && (
           <>
             {cameraActive && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-64 h-64 border-2 border-white/30 rounded-3xl animate-pulse flex items-center justify-center">
-                  <div className="w-full h-0.5 bg-blue-500 shadow-[0_0_15px_blue] absolute animate-bounce" />
+                <div className="w-64 h-64 border-2 border-white/20 rounded-[3rem] animate-premium-pulse flex items-center justify-center">
+                  <div className="w-full h-1 bg-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.5)] absolute animate-bounce" />
                 </div>
               </div>
             )}
 
-            {/* Slider de Zoom Vertical - Essencial para Baixa Visão */}
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-30">
-              <div className="bg-black/50 backdrop-blur-md px-3 py-2 rounded-xl text-xs font-black text-blue-400 border border-white/10">
-                {settings.zoomLevel.toFixed(1)}x
-              </div>
-              <div className="h-64 w-12 bg-black/40 backdrop-blur-lg rounded-full border border-white/10 relative flex items-center justify-center group active:bg-black/60 transition-colors">
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  step="0.1"
-                  aria-label="Ajuste de Zoom"
-                  value={settings.zoomLevel}
-                  onChange={(e) => setSettings(s => ({ ...s, zoomLevel: parseFloat(e.target.value) }))}
-                  style={{
-                    appearance: 'none',
-                    width: '240px',
-                    height: '40px',
-                    transform: 'rotate(-90deg)',
-                    background: 'transparent',
-                    cursor: 'pointer'
-                  }}
-                  className="absolute cursor-pointer"
-                />
-                <div className="absolute inset-x-0 bottom-0 top-0 pointer-events-none flex flex-col justify-between items-center py-8">
-                  <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
-                  <div className="w-2.5 h-2.5 bg-white/40 rounded-full" />
-                  <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />
+            {/* Controles Laterais Premium */}
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 z-30">
+              {hasTorch && (
+                <button
+                  onClick={toggleTorch}
+                  className={`p-4 rounded-2xl glass transition-all active:scale-90 ${torchActive ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' : 'text-white'}`}
+                >
+                  <svg className="w-6 h-6" fill={torchActive ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75c-1.03 0-1.9-.4-2.593-1.003l-.547-.547z" />
+                  </svg>
+                </button>
+              )}
+
+              <div className="flex flex-col items-center gap-3">
+                <div className="bg-black/40 backdrop-blur-xl px-3 py-1.5 rounded-full text-[10px] font-black text-blue-400 border border-white/10 uppercase tracking-widest">
+                  {settings.zoomLevel.toFixed(1)}x
+                </div>
+                <div className="h-48 w-12 glass rounded-full relative flex items-center justify-center">
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.1"
+                    value={settings.zoomLevel}
+                    onChange={(e) => setSettings(s => ({ ...s, zoomLevel: parseFloat(e.target.value) }))}
+                    style={{ appearance: 'none', width: '180px', height: '40px', transform: 'rotate(-90deg)', background: 'transparent', cursor: 'pointer' }}
+                    className="absolute"
+                  />
                 </div>
               </div>
-              <button
-                onClick={() => setSettings(s => ({ ...s, zoomLevel: 1 }))}
-                title="Resetar Zoom"
-                className="p-3 bg-white/10 backdrop-blur-md rounded-full active:scale-90 transition-transform"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
+
+              <button onClick={() => setSettings(s => ({ ...s, zoomLevel: 1 }))} className="p-4 glass rounded-full active:scale-90 transition-transform">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" /></svg>
               </button>
             </div>
           </>

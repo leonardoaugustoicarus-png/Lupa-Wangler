@@ -12,14 +12,17 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const analyzeMedicalDocument = async (base64Image: string): Promise<RecognitionResult> => {
   const prompt = `
-    Contexto: O usuário está no Brasil, especificamente na região de São Paulo.
-    Analise esta imagem de uma receita médica. 
-    1. Extraia o texto completo (corrigindo caligrafia cursiva).
-    2. Identifique CRM ou CRO (especificamente do estado de SP, se aplicável).
-    3. Liste os nomes dos medicamentos.
-    4. Use a ferramenta de busca para verificar se os medicamentos listados são reais no mercado brasileiro e encontrar links de referência confiáveis (ex: Consulta Remédios, bulas ANVISA ou sites de farmácias populares em SP como Droga Raia/Drogasil).
-    5. Crie um resumo simples para o paciente. Ex: "Tomar [Remédio] de 8 em 8 horas".
-
+    Contexto: O usuário está no Brasil (São Paulo) e possui baixa visão. Sua tarefa é analisar esta receita médica com precisão cirúrgica.
+    
+    INSTRUÇÕES:
+    1. TEXTO: Extraia todo o texto, corrigindo letras cursivas difíceis.
+    2. PROFISSIONAL: Identifique CRM/CRO (especificamente de SP se disponível).
+    3. MEDICAMENTOS: Liste os nomes EXATOS dos medicamentos.
+    4. PESQUISA: Use a busca para validar se o medicamento existe no mercado brasileiro (ex: Consulta Remédios, bulas ANVISA, Droga Raia/Drogasil).
+    5. RESUMO ACESSÍVEL: Crie um guia de uso extremamente simples. 
+       - Use frases curtas como "Tomar 1 comprimido de 8 em 8 horas".
+       - ADICIONE SEMPRE esta nota de segurança: "IMPORTANTE: Este resumo é gerado por IA. Sempre confirme com a receita física e seu médico antes de tomar o remédio."
+    
     Retorne um JSON com os campos: text, crm, cro, medications (array), summary, e references (array de objetos com title e uri).
   `;
 
