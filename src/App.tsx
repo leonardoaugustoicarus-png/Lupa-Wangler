@@ -67,19 +67,26 @@ const App: React.FC = () => {
     stopCamera();
     setCameraError(null);
 
+    // Verificação de Contexto Seguro (HTTPS)
+    if (!window.isSecureContext) {
+      setCameraError("Acesso à câmera bloqueado por segurança. O site precisa estar em uma conexão HTTPS segura.");
+      setCameraActive(false);
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError("Seu navegador não suporta acesso à câmera. Tente usar o Chrome ou Safari atualizados.");
+      setCameraError("Seu navegador não suporta acesso à câmera ou bloqueou o acesso. Tente o Chrome ou Safari atualizados.");
       setCameraActive(false);
       return;
     }
 
     try {
-      // Tenta primeiro com as configurações ideais
+      // Primeira tentativa: Alta resolução e câmera traseira
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         },
         audio: false
       });
@@ -90,29 +97,54 @@ const App: React.FC = () => {
         setCameraActive(true);
       }
     } catch (err: any) {
-      console.error("Erro ao acessar câmera (primeira tentativa):", err);
+      console.warn("Erro 1 (HD):", err.name, err.message);
 
-      // Segunda tentativa com restrições mínimas
       try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+        // Segunda tentativa: SD e câmera traseira
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
           audio: false
         });
-        streamRef.current = fallbackStream;
+
+        streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = fallbackStream;
+          videoRef.current.srcObject = stream;
           setCameraActive(true);
         }
-      } catch (fallbackErr: any) {
-        console.error("Erro ao acessar câmera (fallback):", fallbackErr);
-        setCameraActive(false);
+      } catch (err2: any) {
+        console.warn("Erro 2 (SD):", err2.name, err2.message);
 
-        if (fallbackErr.name === 'NotAllowedError' || fallbackErr.name === 'PermissionDeniedError') {
-          setCameraError("Acesso à câmera negado. Habilite nas configurações do site (ícone de cadeado na barra de endereço).");
-        } else if (fallbackErr.name === 'NotFoundError' || fallbackErr.name === 'DevicesNotFoundError') {
-          setCameraError("Nenhuma câmera detectada neste dispositivo.");
-        } else {
-          setCameraError("Não foi possível conectar à câmera. Use o botão abaixo para enviar uma foto.");
+        try {
+          // Última tentativa: Configurações mínimas absolutas
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+          });
+          streamRef.current = fallbackStream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = fallbackStream;
+            setCameraActive(true);
+          }
+        } catch (fallbackErr: any) {
+          console.error("Falha final na câmera:", fallbackErr);
+          setCameraActive(false);
+
+          const errorName = fallbackErr.name || "UnknownError";
+          const errorMessage = fallbackErr.message || "";
+
+          if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+            setCameraError(`Permissão negada (${errorName}). Toque no cadeado na barra de endereços para permitir a câmera.`);
+          } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+            setCameraError(`Câmera não encontrada (${errorName}).`);
+          } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
+            setCameraError(`Câmera em uso por outro app (${errorName}). Feche outros apps e tente de novo.`);
+          } else {
+            setCameraError(`Erro técnico: ${errorName}. ${errorMessage}. Tente carregar uma foto.`);
+          }
         }
       }
     }
