@@ -95,17 +95,19 @@ const App: React.FC = () => {
 
     setNeedsPermission(false);
 
-    try {
-      // Primeira tentativa: Alta resolução e câmera traseira
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: false
-      });
+    // Implementação baseada na sugestão do usuário para máxima compatibilidade
+    const constraints = {
+      video: {
+        facingMode: { ideal: "environment" }, // Força o uso da câmera traseira
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    };
 
+    try {
+      // Primeira tentativa: Usando as restrições sugeridas (com HD ideal)
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
       // Checa suporte a lanterna
