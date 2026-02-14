@@ -1,11 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lupa Saúde Acessível</title>
-    
+
     <!-- PWA & Mobile Meta -->
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,16 +26,20 @@
             /* Evita pull-to-refresh no celular */
             overscroll-behavior-y: contain;
         }
+
         /* Filtros de acessibilidade */
         .contrast-yellow {
             filter: grayscale(1) contrast(3) brightness(0.8) sepia(1) hue-rotate(50deg) saturate(10);
         }
+
         .contrast-high {
             filter: contrast(1.2) brightness(1.05);
         }
+
         .contrast-dark {
             filter: invert(1) hue-rotate(180deg);
         }
+
         /* Esconder barra de scroll do slider */
         input[type=range]::-webkit-slider-thumb {
             appearance: none;
@@ -44,13 +49,15 @@
             border-radius: 50%;
             cursor: pointer;
             border: 4px solid white;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
     </style>
-    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/src/index.css">
 </head>
+
 <body>
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>
