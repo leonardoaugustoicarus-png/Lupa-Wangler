@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, FC } from 'react';
 import { ContrastMode, AppSettings, RecognitionResult, HistoryItem } from './types';
 import { analyzeMedicalDocument, generateSpeech, decodeAudioData } from './services/geminiService';
 
@@ -7,7 +6,7 @@ import { analyzeMedicalDocument, generateSpeech, decodeAudioData } from './servi
  * Lupa Saúde Acessível - Componente Principal
  * Focado em acessibilidade visual e processamento de documentos médicos via IA.
  */
-const App: React.FC = () => {
+const App: FC = () => {
   // Configurações e estados de UI
   const [settings, setSettings] = useState<AppSettings>({
     fontSize: 28,
@@ -308,6 +307,9 @@ const App: React.FC = () => {
             </svg>
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tighter mb-4">Lupa Saúde</h1>
+          <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-6 inline-block">
+            Versão Android Otimizada
+          </div>
           {cameraError ? (
             <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl mb-8 max-w-xs mx-auto">
               <p className="text-red-400 text-sm font-bold">{cameraError}</p>

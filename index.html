@@ -18,42 +18,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            /* Evita pull-to-refresh no celular */
-            overscroll-behavior-y: contain;
-        }
-
-        /* Filtros de acessibilidade */
-        .contrast-yellow {
-            filter: grayscale(1) contrast(3) brightness(0.8) sepia(1) hue-rotate(50deg) saturate(10);
-        }
-
-        .contrast-high {
-            filter: contrast(1.2) brightness(1.05);
-        }
-
-        .contrast-dark {
-            filter: invert(1) hue-rotate(180deg);
-        }
-
-        /* Esconder barra de scroll do slider */
-        input[type=range]::-webkit-slider-thumb {
-            appearance: none;
-            width: 48px;
-            height: 48px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 4px solid white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/index.css">
 </head>
 
