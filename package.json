@@ -1,0 +1,20 @@
+{
+  "name": "lupa-saude-acessivel",
+  "version": "1.0.0",
+  "description": "App de acessibilidade para leitura de receitas médicas com IA e busca contextual.",
+  "author": "Leonardo Augusto",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leonardoaugustoicarus-png/Lupa-Sa-de-Acess-vel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leonardoaugustoicarus-png/Lupa-Sa-de-Acess-vel/issues"
+  },
+  "homepage": "https://github.com/leonardoaugustoicarus-png/Lupa-Sa-de-Acess-vel#readme",
+  "private": true,
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'Build process handled by Vercel static routing'"
+  }
+}

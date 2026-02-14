@@ -1,0 +1,8 @@
+
+{
+  "name": "Lupa Saúde Acessível",
+  "description": "Uma lupa inteligente com IA para ajudar na leitura de receitas médicas e identificação de registros profissionais (CRM/CRO) para pessoas com baixa visão.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
