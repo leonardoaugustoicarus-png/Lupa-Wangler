@@ -156,8 +156,9 @@ const App: React.FC = () => {
       if (settings.audioEnabled && analysis.summary) {
         playAudio(analysis.summary);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro na análise:", error);
+      alert(error.message || "Erro ao analisar documento. Tente novamente.");
     } finally {
       setIsProcessing(false);
     }

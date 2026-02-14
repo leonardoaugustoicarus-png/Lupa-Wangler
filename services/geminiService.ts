@@ -17,7 +17,7 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview', // Pro suporta melhor ferramentas de busca
+    model: 'gemini-1.5-pro', // Pro para melhor extração de dados e busca
     contents: [
       {
         parts: [
@@ -53,21 +53,27 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
     }
   });
 
-  const responseText = response.text;
-  if (!responseText) throw new Error("Resposta vazia da IA");
-  
-  return JSON.parse(responseText.trim()) as RecognitionResult;
+  if (!response || !response.text) {
+    throw new Error("Não foi possível obter uma resposta válida da inteligência artificial.");
+  }
+
+  try {
+    return JSON.parse(response.text().trim()) as RecognitionResult;
+  } catch (e) {
+    console.error("Erro ao processar JSON da IA:", e, response.text());
+    throw new Error("Falha ao processar os dados da receita. Tente uma foto mais nítida.");
+  }
 };
 
 export const generateSpeech = async (text: string): Promise<Uint8Array> => {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
+    model: "gemini-2.0-flash", // Flash 2.0 suporta modalidades nativas como áudio
     contents: [{ parts: [{ text: text }] }],
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Kore' },
+          prebuiltVoiceConfig: { voiceName: 'Puck' }, // Puck/Charon/Kore são vozes válidas
         },
       },
     },
