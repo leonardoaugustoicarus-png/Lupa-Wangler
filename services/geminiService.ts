@@ -6,11 +6,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const analyzeMedicalDocument = async (base64Image: string): Promise<RecognitionResult> => {
   const prompt = `
+    Contexto: O usuário está no Brasil, especificamente na região de São Paulo.
     Analise esta imagem de uma receita médica. 
     1. Extraia o texto completo (corrigindo caligrafia cursiva).
-    2. Identifique CRM ou CRO.
+    2. Identifique CRM ou CRO (especificamente do estado de SP, se aplicável).
     3. Liste os nomes dos medicamentos.
-    4. Use a ferramenta de busca para verificar se os medicamentos listados são reais e encontrar um link de referência confiável (ex: consulta remédios ou bula oficial).
+    4. Use a ferramenta de busca para verificar se os medicamentos listados são reais no mercado brasileiro e encontrar links de referência confiáveis (ex: Consulta Remédios, bulas ANVISA ou sites de farmácias populares em SP como Droga Raia/Drogasil).
     5. Crie um resumo simples para o paciente. Ex: "Tomar [Remédio] de 8 em 8 horas".
 
     Retorne um JSON com os campos: text, crm, cro, medications (array), summary, e references (array de objetos com title e uri).
