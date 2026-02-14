@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   // Referências para elementos de hardware e mídia
@@ -35,7 +36,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const saved = localStorage.getItem('lupa_history');
     if (saved) setHistory(JSON.parse(saved));
+    
+    // Tenta iniciar a câmera automaticamente
     startCamera();
+    
     return stopCamera;
   }, []);
 
@@ -56,23 +60,39 @@ const App: React.FC = () => {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    setCameraActive(false);
   };
 
   const startCamera = async () => {
     stopCamera();
+    setCameraError(null);
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1920 } }, 
+        video: { 
+          facingMode: 'environment', 
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }, 
         audio: false 
       });
+      
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setCameraActive(true);
       }
-    } catch (err) {
-      // Falha silenciosa: o app entra em modo de upload automaticamente
+    } catch (err: any) {
+      console.error("Erro ao acessar câmera:", err);
       setCameraActive(false);
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setCameraError("Acesso à câmera negado. Por favor, habilite nas configurações do seu navegador.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setCameraError("Câmera não encontrada.");
+      } else {
+        setCameraError("Erro ao iniciar a câmera. Tente carregar uma foto.");
+      }
     }
   };
 
@@ -186,8 +206,33 @@ const App: React.FC = () => {
 
       {/* Viewport Principal com Filtros de Acessibilidade */}
       <div className={`flex-1 relative overflow-hidden bg-zinc-900 ${settings.contrastMode === 'yellow' ? 'contrast-yellow' : settings.contrastMode === 'dark' ? 'contrast-dark' : 'contrast-high'}`}>
-        {cameraActive && (
+        {cameraActive ? (
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transition-transform duration-200 origin-center" style={{ transform: `scale(${settings.zoomLevel})` }} />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-900 z-0">
+            {cameraError ? (
+              <div className="space-y-6 animate-in fade-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/50">
+                  <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-black uppercase tracking-tight">Câmera Indisponível</h2>
+                <p className="text-zinc-400 text-sm max-w-xs mx-auto leading-relaxed">{cameraError}</p>
+                <button 
+                  onClick={() => startCamera()}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-600/20"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            ) : (
+              <div className="animate-pulse flex flex-col items-center">
+                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                 <p className="font-black uppercase tracking-widest text-zinc-500">Aguardando Câmera...</p>
+              </div>
+            )}
+          </div>
         )}
         <canvas ref={canvasRef} className={`absolute inset-0 w-full h-full object-cover transition-all duration-200 origin-center ${isFrozen ? 'opacity-100' : 'opacity-0'}`} style={{ transform: `scale(${settings.zoomLevel})` }} />
 
