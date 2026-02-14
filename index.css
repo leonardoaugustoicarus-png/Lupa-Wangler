@@ -1,0 +1,38 @@
+/* Base Reset */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    overscroll-behavior-y: contain;
+}
+
+/* Accessibility Contrast Themes */
+.contrast-yellow {
+    filter: grayscale(1) contrast(3) brightness(0.8) sepia(1) hue-rotate(50deg) saturate(10) !important;
+}
+
+.contrast-high {
+    filter: contrast(1.2) brightness(1.05);
+}
+
+.contrast-dark {
+    filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* Animations */
+@keyframes pulse-blue {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+.animate-pulse-slow {
+    animation: pulse-blue 3s infinite ease-in-out;
+}
