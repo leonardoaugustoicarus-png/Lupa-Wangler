@@ -2,7 +2,17 @@
   "name": "lupa-saude-acessivel",
   "version": "1.0.0",
   "description": "App de acessibilidade para leitura de receitas médicas com IA e busca contextual.",
+  "author": "Leonardo Augusto",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leonardoaugustoicarus-png/Lupa-Wangler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leonardoaugustoicarus-png/Lupa-Wangler/issues"
+  },
+  "homepage": "https://github.com/leonardoaugustoicarus-png/Lupa-Wangler#readme",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
