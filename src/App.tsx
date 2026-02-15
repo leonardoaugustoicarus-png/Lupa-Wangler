@@ -52,6 +52,14 @@ const App: FC = () => {
     return stopCamera;
   }, []);
 
+  // Sincroniza o stream com o elemento de vídeo quando ele aparece no DOM
+  useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current && videoRef.current.srcObject !== streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      console.log("Stream sincronizado com o elemento de vídeo");
+    }
+  }, [cameraActive]);
+
   // Salva resultado no histórico local (limite de 10 itens)
   const saveToHistory = (res: RecognitionResult) => {
     const newItem: HistoryItem = {
@@ -113,9 +121,11 @@ const App: FC = () => {
         setHasTorch(!!caps.torch);
       }
 
+      setCameraActive(true);
+      
+      // Tentativa imediata de anexar (caso o ref já exista)
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setCameraActive(true);
       }
     } catch (err: any) {
       console.warn("Erro 1 (HD):", err.name, err.message);
@@ -132,11 +142,11 @@ const App: FC = () => {
         });
 
         streamRef.current = stream;
+        setCameraActive(true);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setCameraActive(true);
         }
-      } catch (err2: any) {
+    } catch (err2: any) {
         console.warn("Erro 2 (SD):", err2.name, err2.message);
 
         try {
@@ -146,9 +156,9 @@ const App: FC = () => {
             audio: false
           });
           streamRef.current = fallbackStream;
+          setCameraActive(true);
           if (videoRef.current) {
             videoRef.current.srcObject = fallbackStream;
-            setCameraActive(true);
           }
         } catch (fallbackErr: any) {
           console.error("Falha final na câmera:", fallbackErr);
