@@ -207,7 +207,8 @@ const App: FC = () => {
 
   const handleShare = async () => {
     if (!result) return;
-    const shareText = `*Lupa Saúde - Resumo da Receita*\n\n${result.summary}\n\n*Medicamentos:* ${result.medications.join(', ')}\n${result.crm ? `*CRM:* ${result.crm}` : ''}`;
+    triggerHaptic('light');
+    const shareText = `🔍 *Lupa Saúde - Resumo Final*\n\n👨‍⚕️ *Profissional:* ${result.professionalName || 'Não identificado'}\n📝 *Orientações:* ${result.summary}\n💊 *Medicações:* ${result.medications.join(', ')}\n\n*Nota:* Validado via IA Lupa Saúde.`;
 
     if (navigator.share) {
       try {
@@ -220,7 +221,7 @@ const App: FC = () => {
       }
     } else {
       navigator.clipboard.writeText(shareText);
-      alert("Texto copiado para a área de transferência!");
+      alert("Copiado com sucesso! Agora você pode colar no WhatsApp.");
     }
   };
 
@@ -454,33 +455,74 @@ const App: FC = () => {
               ) : result ? (
                 <div className="space-y-6">
                   <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center bg-zinc-100 p-4 rounded-[2rem] border border-black/5">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => result.summary && playAudio(result.summary)}
+                          className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center animate-pop shadow-lg shadow-blue-500/30 active:scale-90 transition-transform"
+                          aria-label="Ouvir Resumo"
+                        >
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            const text = `Receita: ${result.professionalName}\nSumário: ${result.summary}\nMedicações: ${result.medications.join(', ')}`;
+                            navigator.clipboard.writeText(text);
+                            triggerHaptic('light');
+                          }}
+                          className="w-12 h-12 bg-white text-zinc-900 rounded-full flex items-center justify-center border border-black/10 active:scale-90 transition-transform"
+                          aria-label="Copiar Texto"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                        </button>
+                      </div>
+                      <button
+                        onClick={handleMainAction}
+                        className="bg-zinc-900 text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest active:scale-95 transition-transform"
+                      >
+                        Nova Leitura
+                      </button>
+                    </div>
+
                     {result.professionalName && (
-                      <div className="bg-zinc-100 p-4 rounded-3xl">
-                        <p className="text-[10px] font-black uppercase opacity-40 mb-1">Profissional Identificado</p>
-                        <p className="font-black text-xl text-zinc-900">{result.professionalName}</p>
-                        <div className="flex gap-2 mt-2">
-                          {result.crm && <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-black uppercase">CRM {result.crm}</span>}
-                          {result.cro && <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-black uppercase">CRO {result.cro}</span>}
+                      <div className="bg-zinc-100 p-6 rounded-[2.5rem] border border-black/5 animate-slide-up">
+                        <p className="text-[10px] font-black uppercase opacity-40 mb-2 tracking-widest">Profissional Identificado</p>
+                        <p className="font-black text-2xl text-zinc-900 leading-tight">{result.professionalName}</p>
+                        <div className="flex gap-2 mt-3">
+                          {result.crm && <span className="bg-blue-600/10 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase border border-blue-600/20">CRM {result.crm}</span>}
+                          {result.cro && <span className="bg-green-600/10 text-green-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase border border-green-600/20">CRO {result.cro}</span>}
                         </div>
                       </div>
                     )}
 
                     {result.possibilities && result.possibilities.length > 0 && (
-                      <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-3xl">
-                        <p className="text-[10px] font-black uppercase text-yellow-700 mb-1">🧐 Possíveis Registros (Texto Rasurado)</p>
+                      <div className="bg-yellow-50 border-2 border-yellow-200/50 p-6 rounded-[2.5rem] animate-slide-up">
+                        <p className="text-[10px] font-black uppercase text-yellow-700 mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                          Possíveis Registros (Texto Rasurado)
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           {result.possibilities.map((p, i) => (
-                            <span key={i} className="bg-yellow-200 text-yellow-900 px-3 py-1 rounded-full text-sm font-black">{p}</span>
+                            <button
+                              key={i}
+                              onClick={() => {
+                                navigator.clipboard.writeText(p);
+                                triggerHaptic('light');
+                              }}
+                              className="bg-yellow-200 text-yellow-900 px-4 py-2 rounded-2xl text-sm font-black active:scale-95 transition-transform"
+                            >
+                              {p}
+                            </button>
                           ))}
                         </div>
-                        <p className="text-[10px] text-yellow-600 mt-2 italic">* A IA detectou borrões e sugeriu estas variações.</p>
+                        <p className="text-[9px] text-yellow-600 mt-3 italic font-bold">Toque em um número para copiar.</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="border-l-[12px] border-blue-500 pl-4 mt-6">
-                    <p className="text-xs font-black uppercase opacity-40 mb-1">Guia de Uso Acessível</p>
-                    <p className="font-bold leading-tight text-blue-900">{result.summary}</p>
+                  <div className="border-l-[12px] border-blue-500 pl-4 mt-8 bg-blue-50/30 p-4 rounded-r-3xl animate-slide-up">
+                    <p className="text-[10px] font-black uppercase opacity-40 mb-2 tracking-widest text-blue-900">Guia de Uso Acessível</p>
+                    <p className="font-black leading-tight text-blue-900 text-2xl">{result.summary}</p>
                   </div>
 
                   {result.references && result.references.length > 0 && (
@@ -512,21 +554,41 @@ const App: FC = () => {
       </div>
 
       {/* Footer - Barra de Comandos Principais */}
-      <div className="h-44 bg-zinc-950 flex items-center justify-around px-4 pb-8 border-t border-white/5 z-20">
-        <button onClick={() => setShowHistory(true)} aria-label="Histórico" className="w-14 h-14 bg-zinc-900 rounded-full flex items-center justify-center active:scale-90 transition-all">
-          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <div className="h-44 bg-zinc-950 flex items-center justify-around px-8 pb-10 border-t border-white/5 z-20">
+        <button
+          onClick={() => { setShowHistory(true); triggerHaptic('light'); }}
+          aria-label="Histórico"
+          className="w-16 h-16 bg-zinc-900/50 border border-white/5 rounded-2xl flex flex-col items-center justify-center active:scale-90 transition-all text-zinc-400 active:text-white"
+        >
+          <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="text-[9px] font-black uppercase tracking-widest">Histórico</span>
         </button>
 
-        <button onClick={handleMainAction} aria-label={isFrozen ? "Sair" : (cameraActive ? "Capturar" : "Carregar")} className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all active:scale-95 shadow-2xl ${isFrozen ? 'bg-red-600' : 'bg-white text-black'}`}>
-          {isFrozen ? (
-            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-          ) : (
-            <div className="w-20 h-20 rounded-full border-4 border-zinc-200 bg-white" />
-          )}
+        <button
+          onClick={handleMainAction}
+          aria-label={isFrozen ? "Sair" : (cameraActive ? "Capturar" : "Carregar")}
+          className="relative group active:scale-95 transition-all"
+        >
+          <div className="absolute inset-0 bg-blue-600 rounded-full blur-[20px] opacity-20 group-active:opacity-40 transition-opacity" />
+          <div className={`w-28 h-28 rounded-full flex flex-col items-center justify-center relative border-[6px] transition-all ${isFrozen ? 'bg-red-600 border-red-900/50' : 'bg-white border-zinc-200'}`}>
+            {isFrozen ? (
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className={`w-16 h-16 rounded-full border-4 border-zinc-100 mb-1 ${cameraActive ? 'animate-shimmer' : ''}`} />
+                <span className="text-[10px] font-black uppercase text-black">{cameraActive ? 'SCAN' : 'UP'}</span>
+              </div>
+            )}
+          </div>
         </button>
 
-        <button onClick={() => setShowSettings(true)} aria-label="Configurações" className="w-14 h-14 bg-zinc-900 rounded-full flex items-center justify-center active:scale-90 transition-all">
-          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <button
+          onClick={() => { setShowSettings(true); triggerHaptic('light'); }}
+          aria-label="Ajustes"
+          className="w-16 h-16 bg-zinc-900/50 border border-white/5 rounded-2xl flex flex-col items-center justify-center active:scale-90 transition-all text-zinc-400 active:text-white"
+        >
+          <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="text-[9px] font-black uppercase tracking-widest">Ajustes</span>
         </button>
       </div>
 

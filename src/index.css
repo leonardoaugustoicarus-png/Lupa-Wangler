@@ -1,15 +1,19 @@
 /* Base Reset & Variables */
 :root {
-    --glass-bg: rgba(20, 20, 25, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(15, 15, 20, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.08);
     --premium-blue: #3b82f6;
+    --premium-red: #ef4444;
+    --premium-gold: #fbbf24;
     --premium-gradient: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+    --premium-glow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    outline: none;
 }
 
 body {
@@ -63,12 +67,50 @@ body {
     }
 }
 
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(0.95);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+}
+
+.btn-premium {
+    @apply transition-all duration-300 active:scale-95 hover:shadow-[0_0_15px_rgba(255, 255, 255, 0.1)];
+}
+
 .animate-premium-pulse {
     animation: pulse-premium 4s infinite ease-in-out;
 }
 
 .animate-slide-up {
     animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pop {
+    animation: pop 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
 }
 
 /* Accessibility Contrast Themes */
