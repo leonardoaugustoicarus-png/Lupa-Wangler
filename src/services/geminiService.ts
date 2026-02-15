@@ -15,19 +15,20 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
     Contexto: O usuário está no Brasil (São Paulo) e possui baixa visão. Sua tarefa é analisar esta receita médica com precisão cirúrgica.
     
     INSTRUÇÕES:
-    1. TEXTO: Extraia todo o texto, corrigindo letras cursivas difíceis.
-    2. PROFISSIONAL: Identifique CRM/CRO (especificamente de SP se disponível).
-    3. MEDICAMENTOS: Liste os nomes EXATOS dos medicamentos.
-    4. PESQUISA: Use a busca para validar se o medicamento existe no mercado brasileiro (ex: Consulta Remédios, bulas ANVISA, Droga Raia/Drogasil).
-    5. RESUMO ACESSÍVEL: Crie um guia de uso extremamente simples. 
+    1. TEXTO: Extraia todo o texto, corrigindo letras cursivas e rasuradas. Se algo estiver ilegível, tente deduzir pelo contexto médico.
+    2. PROFISSIONAL: Identifique o NOME COMPLETO e o registro (CRM ou CRO) do profissional, focando em registros do estado de São Paulo (SP).
+    3. INCERTEZA: Se o número de registro estiver borrado ou rasurado, identifique as "possibilities" aproximadas (ex: se ler "12_45", liste ["12045", "12845"]).
+    4. MEDICAMENTOS: Liste os nomes EXATOS dos medicamentos.
+    5. PESQUISA: Use a busca para validar se o medicamento existe no mercado brasileiro e para confirmar dados do profissional se possível.
+    6. RESUMO ACESSÍVEL: Crie um guia de uso extremamente simples.
        - Use frases curtas como "Tomar 1 comprimido de 8 em 8 horas".
        - ADICIONE SEMPRE esta nota de segurança: "IMPORTANTE: Este resumo é gerado por IA. Sempre confirme com a receita física e seu médico antes de tomar o remédio."
     
-    Retorne um JSON com os campos: text, crm, cro, medications (array), summary, e references (array de objetos com title e uri).
+    Retorne um JSON com os campos: text, crm, cro, professionalName, possibilities (array), medications (array), summary, e references (array de objetos com title e uri).
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash', // Flash é mais rápido e amplamente disponível
+    model: 'gemini-1.5-flash',
     contents: [
       {
         parts: [
@@ -45,6 +46,8 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
           text: { type: Type.STRING },
           crm: { type: Type.STRING },
           cro: { type: Type.STRING },
+          professionalName: { type: Type.STRING },
+          possibilities: { type: Type.ARRAY, items: { type: Type.STRING } },
           medications: { type: Type.ARRAY, items: { type: Type.STRING } },
           summary: { type: Type.STRING },
           references: {
@@ -68,9 +71,9 @@ export const analyzeMedicalDocument = async (base64Image: string): Promise<Recog
   }
 
   try {
-    return JSON.parse(response.text().trim()) as RecognitionResult;
+    return JSON.parse(response.text.trim()) as RecognitionResult;
   } catch (e) {
-    console.error("Erro ao processar JSON da IA:", e, response.text());
+    console.error("Erro ao processar JSON da IA:", e, response.text);
     throw new Error("Falha ao processar os dados da receita. Tente uma foto mais nítida.");
   }
 };

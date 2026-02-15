@@ -9,6 +9,8 @@ export interface RecognitionResult {
   text: string;
   crm?: string;
   cro?: string;
+  professionalName?: string;
+  possibilities?: string[];
   medications: string[];
   summary: string;
   references?: { title: string; uri: string }[]; // Links de busca do Google

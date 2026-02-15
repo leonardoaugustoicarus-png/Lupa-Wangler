@@ -122,7 +122,7 @@ const App: FC = () => {
       }
 
       setCameraActive(true);
-      
+
       // Tentativa imediata de anexar (caso o ref já exista)
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -146,7 +146,7 @@ const App: FC = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-    } catch (err2: any) {
+      } catch (err2: any) {
         console.warn("Erro 2 (SD):", err2.name, err2.message);
 
         try {
@@ -453,18 +453,33 @@ const App: FC = () => {
                 </div>
               ) : result ? (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-wrap gap-2">
-                      {result.crm && <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-black uppercase">{result.crm}</span>}
-                      {result.cro && <span className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-black uppercase">{result.cro}</span>}
-                    </div>
-                    <button onClick={handleShare} className="p-3 bg-zinc-100 rounded-2xl active:scale-90 transition-transform">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                    </button>
+                  <div className="flex flex-col gap-4">
+                    {result.professionalName && (
+                      <div className="bg-zinc-100 p-4 rounded-3xl">
+                        <p className="text-[10px] font-black uppercase opacity-40 mb-1">Profissional Identificado</p>
+                        <p className="font-black text-xl text-zinc-900">{result.professionalName}</p>
+                        <div className="flex gap-2 mt-2">
+                          {result.crm && <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-black uppercase">CRM {result.crm}</span>}
+                          {result.cro && <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-black uppercase">CRO {result.cro}</span>}
+                        </div>
+                      </div>
+                    )}
+
+                    {result.possibilities && result.possibilities.length > 0 && (
+                      <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-3xl">
+                        <p className="text-[10px] font-black uppercase text-yellow-700 mb-1">🧐 Possíveis Registros (Texto Rasurado)</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.possibilities.map((p, i) => (
+                            <span key={i} className="bg-yellow-200 text-yellow-900 px-3 py-1 rounded-full text-sm font-black">{p}</span>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-yellow-600 mt-2 italic">* A IA detectou borrões e sugeriu estas variações.</p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="border-l-[12px] border-blue-500 pl-4">
-                    <p className="text-xs font-black uppercase opacity-40 mb-1">Como usar</p>
+                  <div className="border-l-[12px] border-blue-500 pl-4 mt-6">
+                    <p className="text-xs font-black uppercase opacity-40 mb-1">Guia de Uso Acessível</p>
                     <p className="font-bold leading-tight text-blue-900">{result.summary}</p>
                   </div>
 
