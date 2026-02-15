@@ -39,6 +39,9 @@ const App: FC = () => {
     const saved = localStorage.getItem('lupa_history');
     if (saved) setHistory(JSON.parse(saved));
 
+    const savedSettings = localStorage.getItem('lupa_settings');
+    if (savedSettings) setSettings(JSON.parse(savedSettings));
+
     // Verifica se já temos permissão (se o navegador suportar o Permissions API)
     if (navigator.permissions && (navigator.permissions as any).query) {
       navigator.permissions.query({ name: 'camera' as any }).then((result) => {
@@ -49,7 +52,13 @@ const App: FC = () => {
       });
     }
 
-    return stopCamera;
+    return () => {
+      stopCamera();
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+        audioContextRef.current = null;
+      }
+    };
   }, []);
 
   // Sincroniza o stream com o elemento de vídeo quando ele aparece no DOM
@@ -58,7 +67,7 @@ const App: FC = () => {
       videoRef.current.srcObject = streamRef.current;
       console.log("Stream sincronizado com o elemento de vídeo");
     }
-  }, [cameraActive]);
+  }, [cameraActive, videoRef.current]);
 
   // Salva resultado no histórico local (limite de 10 itens)
   const saveToHistory = (res: RecognitionResult) => {
@@ -88,7 +97,7 @@ const App: FC = () => {
 
     // Verificação de Contexto Seguro (HTTPS)
     if (!window.isSecureContext) {
-      setCameraError("Acesso à câmera bloqueado por segurança. O site precisa estar em uma conexão HTTPS segura.");
+      setCameraError("Acesso à câmera bloqueado por segurança. O site precisa de uma conexão HTTPS segura para acessar o hardware. No celular, use o link oficial ou 'localhost' no PC.");
       setCameraActive(false);
       return;
     }
@@ -411,6 +420,7 @@ const App: FC = () => {
                 <button
                   onClick={toggleTorch}
                   className={`p-4 rounded-2xl glass transition-all active:scale-90 ${torchActive ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' : 'text-white'}`}
+                  aria-label={torchActive ? "Desligar Lanterna" : "Ligar Lanterna"}
                 >
                   <svg className="w-6 h-6" fill={torchActive ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75c-1.03 0-1.9-.4-2.593-1.003l-.547-.547z" />
@@ -432,11 +442,16 @@ const App: FC = () => {
                     onChange={(e) => setSettings(s => ({ ...s, zoomLevel: parseFloat(e.target.value) }))}
                     style={{ appearance: 'none', width: '180px', height: '40px', transform: 'rotate(-90deg)', background: 'transparent', cursor: 'pointer' }}
                     className="absolute"
+                    aria-label={`Ajustar Zoom: ${settings.zoomLevel.toFixed(1)}x`}
                   />
                 </div>
               </div>
 
-              <button onClick={() => setSettings(s => ({ ...s, zoomLevel: 1 }))} className="p-4 glass rounded-full active:scale-90 transition-transform">
+              <button
+                onClick={() => setSettings(s => ({ ...s, zoomLevel: 1 }))}
+                className="p-4 glass rounded-full active:scale-90 transition-transform"
+                aria-label="Resetar Zoom"
+              >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5" /></svg>
               </button>
             </div>
@@ -556,8 +571,12 @@ const App: FC = () => {
       {/* Footer - Barra de Comandos Principais */}
       <div className="h-44 bg-zinc-950 flex items-center justify-around px-8 pb-10 border-t border-white/5 z-20">
         <button
-          onClick={() => { setShowHistory(true); triggerHaptic('light'); }}
-          aria-label="Histórico"
+          onClick={() => {
+            setShowHistory(true);
+            setShowSettings(false);
+            triggerHaptic('light');
+          }}
+          aria-label="Ver Histórico de Receitas"
           className="w-16 h-16 bg-zinc-900/50 border border-white/5 rounded-2xl flex flex-col items-center justify-center active:scale-90 transition-all text-zinc-400 active:text-white"
         >
           <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -583,8 +602,12 @@ const App: FC = () => {
         </button>
 
         <button
-          onClick={() => { setShowSettings(true); triggerHaptic('light'); }}
-          aria-label="Ajustes"
+          onClick={() => {
+            setShowSettings(true);
+            setShowHistory(false);
+            triggerHaptic('light');
+          }}
+          aria-label="Abrir Ajustes de Acessibilidade"
           className="w-16 h-16 bg-zinc-900/50 border border-white/5 rounded-2xl flex flex-col items-center justify-center active:scale-90 transition-all text-zinc-400 active:text-white"
         >
           <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -597,7 +620,13 @@ const App: FC = () => {
         <div className="fixed inset-0 bg-black z-50 p-6 flex flex-col animate-in slide-in-from-left duration-300">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-black uppercase tracking-tight">Últimas Receitas</h2>
-            <button onClick={() => setShowHistory(false)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black">FECHAR</button>
+            <button
+              onClick={() => { setShowHistory(false); triggerHaptic('light'); }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all"
+              aria-label="Fechar Histórico"
+            >
+              Fechar
+            </button>
           </div>
           <div className="space-y-4 overflow-y-auto">
             {history.length === 0 && <p className="opacity-40 text-center py-20">Nenhuma receita salva no momento.</p>}
@@ -615,21 +644,67 @@ const App: FC = () => {
         <div className="fixed inset-0 bg-black/95 z-50 p-8 flex flex-col animate-in slide-in-from-bottom duration-300">
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-3xl font-black uppercase tracking-tighter">Ajustes</h2>
-            <button onClick={() => setShowSettings(false)} className="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase">PRONTO</button>
+            <button
+              onClick={() => { setShowSettings(false); triggerHaptic('light'); }}
+              className="bg-white text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all"
+              aria-label="Salvar Ajustes"
+            >
+              Pronto
+            </button>
           </div>
           <div className="space-y-12">
             <section>
               <h3 className="text-sm font-black uppercase opacity-40 mb-4 tracking-widest">Tamanho da Fonte</h3>
               <div className="flex items-center gap-4">
-                <button onClick={() => setSettings(s => ({ ...s, fontSize: Math.max(20, s.fontSize - 4) }))} className="flex-1 bg-zinc-800 p-6 rounded-3xl text-4xl font-black">-</button>
-                <button onClick={() => setSettings(s => ({ ...s, fontSize: Math.min(60, s.fontSize + 4) }))} className="flex-1 bg-zinc-800 p-6 rounded-3xl text-4xl font-black">+</button>
+                <button
+                  onClick={() => {
+                    const newSize = Math.max(20, settings.fontSize - 4);
+                    setSettings(s => {
+                      const updated = { ...s, fontSize: newSize };
+                      localStorage.setItem('lupa_settings', JSON.stringify(updated));
+                      return updated;
+                    });
+                    triggerHaptic('light');
+                  }}
+                  className="flex-1 bg-zinc-800 p-6 rounded-3xl text-4xl font-black active:bg-zinc-700"
+                  aria-label="Diminuir Fonte"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => {
+                    const newSize = Math.min(60, settings.fontSize + 4);
+                    setSettings(s => {
+                      const updated = { ...s, fontSize: newSize };
+                      localStorage.setItem('lupa_settings', JSON.stringify(updated));
+                      return updated;
+                    });
+                    triggerHaptic('light');
+                  }}
+                  className="flex-1 bg-zinc-800 p-6 rounded-3xl text-4xl font-black active:bg-zinc-700"
+                  aria-label="Aumentar Fonte"
+                >
+                  +
+                </button>
               </div>
             </section>
             <section>
               <h3 className="text-sm font-black uppercase opacity-40 mb-4 tracking-widest">Esquema de Cores</h3>
               <div className="grid grid-cols-3 gap-3">
                 {['normal', 'dark', 'yellow'].map(mode => (
-                  <button key={mode} onClick={() => setSettings(s => ({ ...s, contrastMode: mode as ContrastMode }))} className={`p-5 rounded-2xl font-black text-[10px] uppercase border-4 transition-all ${settings.contrastMode === mode ? 'border-blue-600 scale-105' : 'border-zinc-800 opacity-50'}`}>
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setSettings(s => {
+                        const updated = { ...s, contrastMode: mode as ContrastMode };
+                        localStorage.setItem('lupa_settings', JSON.stringify(updated));
+                        return updated;
+                      });
+                      triggerHaptic('light');
+                    }}
+                    className={`p-5 rounded-2xl font-black text-[10px] uppercase border-4 transition-all ${settings.contrastMode === mode ? 'border-blue-600 scale-105' : 'border-zinc-800 opacity-50'}`}
+                    aria-label={`Mudar para modo ${mode}`}
+                  >
                     {mode === 'yellow' ? 'Amarelo' : mode === 'dark' ? 'Invertido' : 'Padrão'}
                   </button>
                 ))}
